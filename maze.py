@@ -1,67 +1,83 @@
+########## NOTES ##########
+# FIX PLACEMENT (when screen is adjusted)
+# ADD MORE LEVELS
+# ADD POWERUPS?
+# CHANGE COLORS/IMGS
 
+from cmu_graphics import *
 
-# def onAppStart(app):
-#     app.level = 5
+app.background = 'black'
 
-# def drawFractal(level, cx, cy, r):
-#     def drawMonkey(cx, cy, r):
-#         tanCircle_r = r/1.75
-#         tanCircle_cy = cy+1/3*r
-#         mouthLine_x1 = cx - tanCircle_r
-#         mouthLine_x2 = cx + tanCircle_r
-#         eye_r = r/3.5
-#         eye_y = cy-2/5*r
-#         eye_x1 = cx-tanCircle_r*3/4
-#         eye_x2 = cx+tanCircle_r*3/4
-#         pupil_r = eye_r/1.75
-#         highlights_r = pupil_r/2
-#         highlights_x1 = eye_x1-pupil_r*2/4
-#         highlights_x2 = eye_x2-pupil_r*2/4
-#         highlights_y = eye_y-2/5*pupil_r
-#         nose_r = eye_r/4
-#         nose_x1 = cx - tanCircle_r/5
-#         nose_x2 = cx + tanCircle_r/5
-#         nose_y = tanCircle_cy-tanCircle_r/2
+class Pen():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.color = 'white'
 
-#         drawCircle(cx, cy, r, fill='saddlebrown', border='black', borderWidth = 3)
-#         drawCircle(cx, tanCircle_cy, tanCircle_r, fill='tan', border='black', borderWidth = 3)
+levels = [""]
+levelOne = [
+    "XXXXXXXXXXXXXXXXXXXX",
+    "X XXXXXX        XXXX",
+    "X XXXXXX  XXXX  XXXX",
+    "X     XX  XXXX  XXXX",
+    "X     XX  XXXX  XXXX",
+    "XXXX  XX  XX      XX",
+    "XXXX  XX  XX      XX",
+    "XXXX  XX  XXXXX  XXX",
+    "X  X        XXX  XXX",
+    "X  X  XXXXXXXXXXXXXX",
+    "X        XXXXXXXXXXX",
+    "X           XXXXX XX",
+    "XXXXXXXX    XXXXX  X",
+    "XXXXXXXXXX  XXXXX  X",
+    "XXX    XXX         X",
+    "XXX    XXX         X",
+    "X                  X",
+    "X         XXXXXXXXXX",
+    "XXXXXX    XXXXXXXXXX",
+    "X    XXX  XXXXXXXXXX",
+    "XXX  XXX           X",
+    "X                  X",
+    "X   XXXXXXXXXXXX  XX",
+    "XXXXXXXXXXXXXXXX  XX",
+]
 
-#         drawCircle(eye_x1, eye_y, eye_r, fill='white', border='black', borderWidth = 3)
-#         drawCircle(eye_x2, eye_y, eye_r, fill='white', border='black', borderWidth = 3)
+levels.append(levelOne)
 
-#         drawCircle(eye_x1, eye_y, pupil_r, fill='black', border='black', borderWidth = 3)
-#         drawCircle(eye_x2, eye_y, pupil_r, fill='black', border='black', borderWidth = 3)
+def setupMaze(level, app):
+    maze = []
+    mazeHeight = len(level)
+    mazeWidth = len(level[0])
+    mazeX = (app.width - mazeWidth * 24) // 2  # Calculate X offset for centering
+    mazeY = (app.height - mazeHeight * 24) // 2  # Calculate Y offset for centering
 
-#         drawCircle(highlights_x1, highlights_y, highlights_r, fill='white')
-#         drawCircle(highlights_x2, highlights_y, highlights_r, fill='white')
+    for y in range(mazeHeight):
+        for x in range(mazeWidth):
+            character = level[y][x]
+            screenX = mazeX + x * 24
+            screenY = mazeY + y * 24
+    
+    # maze = []
+    # for y in range(len(level)):
+    #     for x in range(len(level[y])):
+    #         character = level[y][x]
+    #         screenX = 100 + (x * 24)
+    #         screenY = 600 - (y * 24)
 
-#         drawCircle(nose_x1, nose_y, nose_r, fill='black')
-#         drawCircle(nose_x2, nose_y, nose_r, fill='black')
+            if character == "X":
+                pen = Pen(screenX, screenY)
+                maze.append(pen)
+    return maze
 
-#         drawLine(mouthLine_x1, tanCircle_cy, mouthLine_x2, tanCircle_cy, lineWidth = 3)
+def onAppStart(app):
+    app.maze = setupMaze(levels[1], app)
 
-#     if level == 0:
-#         drawMonkey(cx, cy, r)
-#     else: 
-#         drawMonkey(cx, cy, r)
-#         newR = r/2
-#         drawFractal(level-1, (cx-r*2/3)-newR, cy-2/3*r, newR)
-#         drawFractal(level-1, (cx+r*2/3)+newR, cy-2/3*r, newR)
+def redrawAll(app):
+    for pen in app.maze:
+        drawRect(pen.x, pen.y, 20, 20, fill=pen.color, border=pen.color)
 
-# def onKeyPress(app, key):
-#     if (key in ['up', 'right']) and (app.level < 5):
-#         app.level += 1
-#     elif (key in ['down', 'left']) and (app.level > 0):
-#         app.level -= 1
+def main():
+    runApp(width=700, height=700)
 
-# def redrawAll(app):
-#     drawFractal(app.level, app.width/2, app.height/2 + 30, 150)
-#     drawLabel('Use the arrow keys to change the level!',
-#             app.width/2, 50, size=12, bold=True)
-
-# def main():
-#     runApp()
-
-# main()
-
-
+if __name__ == '__main__':
+    main()

@@ -19,11 +19,8 @@ def onAppStart(app):
     app.selection = (0, 0)
     app.words = ["DOG", "CAT", "RAT", "HAT", "MAT", "BAT"]  # Words to find
     app.board = generateBoard(app.rows, app.cols, app.words)
-    app.selectedCells = set() ###
+    app.selectedCells = [] ###
     app.wordLines = [] ###
-    app.timerDelay = 1000  ### 1 second delay
-    app.elapsedTime = 0 ###
-    app.cellTimer = None ###
 
 # Cell selection
 def onMouseMove(app, mouseX, mouseY):
@@ -38,19 +35,8 @@ def onMousePress(app, mouseX, mouseY): ###
     selectedCell = getCell(app, mouseX, mouseY)
     if selectedCell != None:
         app.selection = selectedCell
-        app.selectedCells.add(selectedCell)
-        if app.cellTimer != None:
-            app.timerDelay = 7000  # Set delay to 7 seconds for resetting color
-            app.elapsedTime = 0
-        else:
-            app.cellTimer = True
-
-# def timerTimeout(app): ###
-#     if app.cellTimer:
-#         app.elapsedTime += app.timerDelay
-#         if app.elapsedTime >= 7000:
-#             app.selectedCells = set()  # Reset selected cells after 7 seconds
-#             app.cellTimer = None
+        app.selectedCells.append(selectedCell)
+        print(app.selectedCells)
 
 def generateBoard(rows, cols, words):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -101,15 +87,24 @@ def drawCell(app, row, col):
              borderWidth=app.cellBorderWidth)
     drawLabel(app.board[row][col], cellLeft + cellWidth/2, cellTop + cellHeight/2, size=15)
 
-# def drawWordLines(app): ###
-#     for line in app.wordLines:
-#         startRow, startCol, endRow, endCol = line
-#         startCellX, startCellY = getCellLeftTop(app, startRow, startCol)
-#         endCellX, endCellY = getCellLeftTop(app, endRow, endCol)
-#         cellWidth, cellHeight = getCellSize(app)
-#         drawLine(startCellX + cellWidth / 2, startCellY + cellHeight / 2,
-#                  endCellX + cellWidth / 2, endCellY + cellHeight / 2,
-#                  width=5, fill='green')
+def drawWordLines(app):
+    # for word in app.words:
+    #     # Convert the word to uppercase for consistency
+    #     word = word.upper()
+    #     # Convert the selected cells to a word
+    selected_word = ''.join([app.board[row][col] for (row, col) in app.selectedCells])
+    print(selected_word)
+    if selected_word in app.words:
+        print("WORD FOUND")
+        # for i in range(len(app.selectedCells) - 1):
+        #     row1, col1 = app.selectedCells[i]
+        #     row2, col2 = app.selectedCells[i + 1]
+        #     startX, startY = getCellLeftTop(app, row1, col1)
+        #     endX, endY = getCellLeftTop(app, row2, col2)
+        #     cellWidth, cellHeight = getCellSize(app)
+        #     drawLine(startX + cellWidth / 2, startY + cellHeight / 2,
+        #              endX + cellWidth / 2, endY + cellHeight / 2,
+        #              width=5, fill='red')
 
 def drawSelectedCell(app, cell): ####
     row, col = cell
@@ -148,7 +143,7 @@ def redrawAll(app):
     # drawLabel('Word Search Game', 300, 30, size=16)
     drawBoardBorder(app)
     drawBoard(app)
-    # drawWordLines(app)
+    drawWordLines(app)
     for cell in app.selectedCells:
         drawSelectedCell(app, cell)
 
