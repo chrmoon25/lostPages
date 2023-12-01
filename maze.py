@@ -4,6 +4,7 @@
 # Wall image: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
 # Page sprite: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
 # Potion sprites: https://wiki.hypixel.net/Potions
+# Ghosts: https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.deviantart.com%2Fandwise1121%2Fart%2FGhost-idle-892396700&psig=AOvVaw3eGvgNnC5_5xCprYBaPUS2&ust=1701499213399000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJjN-dXQ7YIDFQAAAAAdAAAAABAD
 # cite gif source (mike)
 
 # FIX PLACEMENT (when screen is adjusted)
@@ -16,12 +17,14 @@
 from cmu_graphics import *
 from PIL import Image
 import math
+import random
 
 # CITATION: I followed parts of a tutorial from "Tokyo EdTech" from YouTube - https://www.youtube.com/watch?v=inocKE13DEA&list=PLlEgNdBJEO-lNDJgg90fmfAq9RzORkQWP
 # although they used turtle to help build their maze.
 # Lists to store walls and collected pages
 walls = []
 pages = []
+ghosts = []
 levels = [""]
 app.background = 'black'
 
@@ -30,23 +33,28 @@ class Pen():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.color = 'white'
+        # self.color = 'white'
 
 # Class to represent the pages (to be collected)
 class Page():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.color = 'green'
         self.gold = 100
         self.visible = True
-    
+
     # Method to hide the pages when they are walked over
     # FIX THIS!!!
     def destroy(self):
         self.visible = False
         # self.x = 2000
         # self.y = 2000
+
+class Ghost():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.gold = 100
     
     # def redrawAll(self):
     #     if self.visible:
@@ -114,23 +122,23 @@ levelOne = [
     "X XXXXXX  XXXX  XXXX",
     "X     XX  XXXX  XXXX",
     "X     XX  XXXX  XXXX",
-    "XXXX  XX  XX      XX",
+    "XXXX  XX  XX  G   XX",
     "XXXX  XX  XX      XX",
     "XXXX  XX  XXXXX  XXX",
     "X  X        XXX TXXX",
     "X  X  XXXXXXXXXXXXXX",
-    "X        XXXXXXXXXXX",
+    "X     G  XXXXXXXXXXX",
     "X           XXXXXTXX",
     "XXXXXXXX    XXXXX  X",
     "XXXXXXXXXX  XXXXX  X",
     "XXX    XXX         X",
-    "XXX    XXX         X",
+    "XXX    XXX  G      X",
     "X                  X",
     "X         XXXXXXXXXX",
     "XXXXXX    XXXXXXXXXX",
     "XT   XXX  XXXXXXXXXX",
     "XXX  XXX           X",
-    "X                  X",
+    "X       G          X",
     "X   XXXXXXXXXXXX  XX",
     "XXXXXXXXXXXXXXXX  XX",
 ]
@@ -179,7 +187,13 @@ def setupMaze(level, app):
                 page = Page(screenX, screenY)
                 maze.append(page)
                 pages.append(page)
-    return maze, player, page
+
+            if character == "G":
+                ghost = Ghost(screenX, screenY)
+                maze.append(ghost)
+                ghosts.append(ghost)
+                
+    return maze, player, page, ghost
 
 # Player movement according to keys
 def onKeyHold(app, keys):
@@ -193,7 +207,8 @@ def onKeyHold(app, keys):
         app.player.moveRight()
 
 def onAppStart(app):
-    app.maze, app.player,app.page = setupMaze(levels[1], app) 
+    app.maze, app.player,app.page, app.ghost = setupMaze(levels[1], app) 
+
     playerGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif')
     app.playerSpriteList = []
     for frame in range(playerGif.n_frames):
@@ -207,6 +222,20 @@ def onAppStart(app):
         fr = CMUImage(fr)
         #Put in our sprite list
         app.playerSpriteList.append(fr)
+
+    ghostGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif')
+    app.ghostSpriteList = []
+    for frame in range(ghostGif.n_frames):
+        #Set the current frame
+        ghostGif.seek(frame)
+        #Resize the image
+        fr = ghostGif.resize((20, 20))
+        #Flip the image
+        # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
+        #Convert to CMUImage
+        fr = CMUImage(fr)
+        #Put in our sprite list
+        app.ghostSpriteList.append(fr)
     
     pageGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif')
     app.pageSpriteList = []
@@ -220,6 +249,7 @@ def onAppStart(app):
     app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
 
     print(app.playerSpriteList)
+    print(app.ghostSpriteList)
     print(app.pageSpriteList)
 
 
@@ -230,8 +260,13 @@ def onStep(app):
     #Set spriteCounter to next frame
     app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
 
+
+
+
+    
+
 def redrawAll(app):
-    for item in app.maze + [app.player] + [app.page]:
+    for item in app.maze + [app.player] + [app.page] + [app.ghost]:
         if isinstance(item, Pen):
             drawImage(app.wallSprite, item.x, item.y, align = 'center')
             # drawRect(item.x, item.y, 20, 20, fill=item.color, border=item.color)
@@ -239,6 +274,9 @@ def redrawAll(app):
             # drawImage(app.spriteList[app.spriteCounter], item.x, item.y)
             drawImage(app.playerSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
             # drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
+        elif isinstance(item, Ghost):
+            # drawImage(app.spriteList[app.spriteCounter], item.x, item.y)
+            drawImage(app.ghostSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
         elif isinstance(item, Page) and item.visible: #do I need this argument?
             drawImage(app.pageSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
             # drawImage(app.playerSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
