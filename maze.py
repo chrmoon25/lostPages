@@ -103,14 +103,17 @@ class Ghost():
         # Find shortest(?) path using BFS
         # queue stores the start position, the list will be the path
         queue = [(start, [])] # 
-        visited = set() # keep track of visited positions
+        visited = [] # keep track of visited positions
 
         while queue: # while the queue is not empty then
-            # get the current position is a coordinate and get the path which is the list
+            # get the current position is a coordinate and get the path which is the LIST
             current, path = queue.pop(0)
+            print(current)
+            print(path)
 
             if current == target:
-                if len(path) > 0:  # ensure the path has cells
+                if len(path) > 0:  # make sure the path has cells
+                    print(path)
                     # get the next cell to move toward the player
                     nextMove = path[0] # first move in the list (coordinate)
                     # nextMove is a coordinate point (so we need to seperate it)
@@ -130,7 +133,7 @@ class Ghost():
                     break
 
             if current not in visited:
-                visited.add(current)
+                visited.append(current)
                 # check possible moves for the current position
                 # possible moves are U D L R
                 for neighbor in self.possibleMoves(current):
@@ -394,10 +397,6 @@ def onStep(app):
 
     #Set spriteCounter to next frame
     app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
-
-
-
-
     
 
 def redrawAll(app):
