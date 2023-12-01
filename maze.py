@@ -1,11 +1,20 @@
 ########## NOTES ##########
+# Player sprite: https://kyunt.itch.io/purple-thief-player-animation-enemies-items
+# Book sprite: https://wifflegif.com/gifs/706281-pixel-art-spell-gif
+# Wall image: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
+# Page sprite: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
+# Potion sprites: https://wiki.hypixel.net/Potions
+# cite gif source (mike)
+
 # FIX PLACEMENT (when screen is adjusted)
 # ADD MORE LEVELS
 # ADD POWERUPS?
 # CHANGE COLORS/IMGS
 # ADD SMOOTH MOVEMENT
+# FIX OVERLAY WITH PLAYER
 
 from cmu_graphics import *
+from PIL import Image
 import math
 
 # CITATION: I followed parts of a tutorial from "Tokyo EdTech" from YouTube - https://www.youtube.com/watch?v=inocKE13DEA&list=PLlEgNdBJEO-lNDJgg90fmfAq9RzORkQWP
@@ -22,7 +31,7 @@ class Pen():
         self.x = x
         self.y = y
         self.color = 'white'
-    
+
 # Class to represent the pages (to be collected)
 class Page():
     def __init__(self, x, y):
@@ -33,8 +42,11 @@ class Page():
         self.visible = True
     
     # Method to hide the pages when they are walked over
-    def hide(self):
+    # FIX THIS!!!
+    def destroy(self):
         self.visible = False
+        # self.x = 2000
+        # self.y = 2000
     
     # def redrawAll(self):
     #     if self.visible:
@@ -100,14 +112,14 @@ levelOne = [
     "XPXXXXXX        XXXX",
     "X XXXXXX  XXXX  XXXX",
     "X     XX  XXXX  XXXX",
-    "X     XX  XXXX  XXXX",
+    "X  T  XX  XXXX  XXXX",
     "XXXX  XX  XX      XX",
     "XXXX  XX  XX      XX",
     "XXXX  XX  XXXXX  XXX",
     "X  X        XXX  XXX",
     "X  X  XXXXXXXXXXXXXX",
     "X        XXXXXXXXXXX",
-    "X           XXXXXTXX",
+    "X           XXXXX XX",
     "XXXXXXXX    XXXXX  X",
     "XXXXXXXXXX  XXXXX  X",
     "XXX    XXX         X",
@@ -143,14 +155,9 @@ def setupMaze(level, app):
             character = level[y][x]
             screenX = mazeX + x * 24
             screenY = mazeY + y * 24
-    
-    # Hard-coding the position
-    # maze = []
-    # for y in range(len(level)):
-    #     for x in range(len(level[y])):
-    #         character = level[y][x]
-    #         screenX = 100 + (x * 24)
-    #         screenY = 600 - (y * 24)
+
+            playerX = app.width//2
+            playerY = app.height//2
 
             # Each letter refers to it's maze letter counterpart
             # X is the walls
@@ -165,7 +172,7 @@ def setupMaze(level, app):
                 # print(walls)
 
             if character == "P":
-                player = Player(screenX, screenY)
+                player = Player(playerX, playerY)
 
             if character == "T":
                 page = Page(screenX, screenY)
@@ -185,15 +192,55 @@ def onKeyPress(app, key):
 
 def onAppStart(app):
     app.maze, app.player,app.page = setupMaze(levels[1], app) 
+    playerGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif')
+    app.playerSpriteList = []
+    for frame in range(playerGif.n_frames):
+        #Set the current frame
+        playerGif.seek(frame)
+        #Resize the image
+        fr = playerGif.resize((24, 24))
+        #Flip the image
+        # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
+        #Convert to CMUImage
+        fr = CMUImage(fr)
+        #Put in our sprite list
+        app.playerSpriteList.append(fr)
+    
+    pageGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif')
+    app.pageSpriteList = []
+    for frame in range(pageGif.n_frames):
+        pageGif.seek(frame)
+        fr = pageGif.resize((20, 20))  # Resize to 24x24 pixels
+        cmu_image = CMUImage(fr)
+        app.pageSpriteList.append(cmu_image)
+    
+    wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
+    app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
+
+    print(app.playerSpriteList)
+    print(app.pageSpriteList)
+
+
+    app.spriteCounter = 0
+    app.stepsPerSecond = 5
+
+def onStep(app):
+    #Set spriteCounter to next frame
+    app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
 
 def redrawAll(app):
     for item in app.maze + [app.player] + [app.page]:
         if isinstance(item, Pen):
-            drawRect(item.x, item.y, 20, 20, fill=item.color, border=item.color)
+            drawImage(app.wallSprite, item.x, item.y, align = 'center')
+            # drawRect(item.x, item.y, 20, 20, fill=item.color, border=item.color)
         elif isinstance(item, Player):
-            drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
-        elif isinstance(item, Page):
-            drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
+            # drawImage(app.spriteList[app.spriteCounter], item.x, item.y)
+            drawImage(app.playerSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
+            # drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
+        elif isinstance(item, Page) and item.visible: #do I need this argument?
+            drawImage(app.pageSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
+            # drawImage(app.playerSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
+            # drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
     
     # Check collision between player and pages, and add gold if collision is made
     # Hiding feature not working at the moment
@@ -201,7 +248,8 @@ def redrawAll(app):
         if app.player.isCollision(page):
             app.player.gold += page.gold
             print("Player Gold: {}".format(app.player.gold))
-            page.hide()
+            page.destroy()
+            pages.remove(page) # Each page is a one time instance (100 gold only one time)
 
 def main():
     runApp(width=700, height=700)
