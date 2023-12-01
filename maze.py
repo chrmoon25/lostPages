@@ -54,11 +54,143 @@ class Ghost():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.gold = 100
+        self.gold = 25
+        self.direction = random.choice(['up', 'down', 'left', 'right'])
+
+    def move(self):
+        dx, dy = 0, 0
+        if self.direction == 'up':
+            dy = 24
+        if self.direction == 'down':
+            dy = -24
+        if self.direction == 'left':
+            dx = -24
+            # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
+
+        if self.direction == 'right':
+            dx = 24
+
+        
+        moveX = self.x + dx
+        moveY = self.y + dy
+
+        if (moveX, moveY) not in walls:
+            self.x = moveX
+            self.y = moveY
+        else:
+           self.direction = random.choice(['up', 'down', 'left', 'right']) 
+
     
-    # def redrawAll(self):
-    #     if self.visible:
-    #         drawRect(self.x, self.y, 10, 10, fill=self.color)
+    def isClose(self, other):
+        a = self.x - other.x
+        b = self.y - other.y
+        distance = math.sqrt((a**2) + (b**2))
+
+        if distance <= 75:
+            return True
+        else:
+            return False
+
+    # CITATION: Used for pathfinding with BFS
+    # https://www.cs.cmu.edu/~112/notes/student-tp-guides/Pathfinding.pdf
+    # https://en.wikipedia.org/wiki/Breadth-first_search 
+    # https://favtutor.com/blogs/breadth-first-search-python
+    # refine this part more 
+    def chase(self, player):
+        start = (self.x, self.y)
+        target = (player.x, player.y)
+
+        # Find shortest(?) path using BFS
+        # queue stores the start position, the list will be the path
+        queue = [(start, [])] # 
+        visited = set() # keep track of visited positions
+
+        while queue: # while the queue is not empty then
+            # get the current position is a coordinate and get the path which is the list
+            current, path = queue.pop(0)
+
+            if current == target:
+                if len(path) > 0:  # ensure the path has cells
+                    # get the next cell to move toward the player
+                    nextMove = path[0] # first move in the list (coordinate)
+                    # nextMove is a coordinate point (so we need to seperate it)
+                    nextX, nextY = nextMove
+
+                    # calculate the next position for the ghost to go in 
+                    moveX = self.x + (nextX - self.x)
+                    moveY = self.y + (nextY - self.y)
+
+                    # validate that the move is not one of the wall coordinate 
+                    if (moveX, moveY) not in walls:
+                        # make the move
+                        self.x = moveX
+                        self.y = moveY
+                    # when the target is reached, then the loop should break 
+                    # fix this
+                    break
+
+            if current not in visited:
+                visited.add(current)
+                # check possible moves for the current position
+                # possible moves are U D L R
+                for neighbor in self.possibleMoves(current):
+                    # add neightbors and their paths to the queue
+                    queue.append((neighbor, path + [neighbor]))
+
+# putting this here for reference - https://favtutor.com/blogs/breadth-first-search-python
+# graph = {
+#   '5' : ['3','7'],
+#   '3' : ['2', '4'],
+#   '7' : ['8'],
+#   '2' : [],
+#   '4' : ['8'],
+#   '8' : []
+# }
+
+# visited = [] # List for visited nodes.
+# queue = []     #Initialize a queue
+
+# def bfs(visited, graph, node): #function for BFS
+#   visited.append(node)
+#   queue.append(node)
+
+#   while queue:          # Creating loop to visit each node
+#     m = queue.pop(0) 
+#     print (m, end = " ") 
+
+#     for neighbour in graph[m]:
+#       if neighbour not in visited:
+#         visited.append(neighbour)
+#         queue.append(neighbour)
+
+# # Driver Code
+# print("Following is the Breadth-First Search")
+# bfs(visited, graph, '5') 
+
+
+    def possibleMoves(self, current):
+        x, y = current
+        neighbors = [
+            (x + 24, y),  # right
+            (x - 24, y),  # left
+            (x, y + 24),  # down
+            (x, y - 24),  # up
+        ]
+        
+        validNeighbors = []
+        # accounts for each move in our moves
+        for neighbor in neighbors:
+            # check its not a wall coordinate
+            if neighbor not in walls:
+                # if not, then add it
+                validNeighbors.append(neighbor)
+
+        # list of moves that the ghost can move to
+        return validNeighbors
+
+
+
+
     
 # Player class
 class Player():
@@ -127,18 +259,18 @@ levelOne = [
     "XXXX  XX  XXXXX  XXX",
     "X  X        XXX TXXX",
     "X  X  XXXXXXXXXXXXXX",
-    "X     G  XXXXXXXXXXX",
+    "X        XXXXXXXXXXX",
     "X           XXXXXTXX",
     "XXXXXXXX    XXXXX  X",
     "XXXXXXXXXX  XXXXX  X",
     "XXX    XXX         X",
-    "XXX    XXX  G      X",
+    "XXX    XXX  GXXX   X",
     "X                  X",
-    "X         XXXXXXXXXX",
+    "X       X XXXXXXXXXX",
     "XXXXXX    XXXXXXXXXX",
     "XT   XXX  XXXXXXXXXX",
     "XXX  XXX           X",
-    "X       G          X",
+    "X                  X",
     "X   XXXXXXXXXXXX  XX",
     "XXXXXXXXXXXXXXXX  XX",
 ]
@@ -257,6 +389,9 @@ def onAppStart(app):
     app.stepsPerSecond = 5
 
 def onStep(app):
+    # app.moveSpeed = 5
+
+
     #Set spriteCounter to next frame
     app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
 
@@ -290,6 +425,18 @@ def redrawAll(app):
             print("Player Gold: {}".format(app.player.gold))
             page.destroy()
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
+    
+    for ghost in ghosts:
+        ghost.move()
+
+        if app.player.isCollision(ghost):
+            print("YOU DIED!!!")
+
+        if ghost.isClose(app.player):
+            print("ghost is CLOSE!")
+            ghost.chase(app.player)
+
+    
 
 def main():
     runApp(width=700, height=700)
