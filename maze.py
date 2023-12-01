@@ -59,6 +59,7 @@ class Player():
         self.y = y
         self.color = 'blue'
         self.gold = 0
+        # self.move = False
     
     # Method to check the collision between the player and other objects in the maze
     # Includes pages and later on, enemies
@@ -112,14 +113,14 @@ levelOne = [
     "XPXXXXXX        XXXX",
     "X XXXXXX  XXXX  XXXX",
     "X     XX  XXXX  XXXX",
-    "X  T  XX  XXXX  XXXX",
+    "X     XX  XXXX  XXXX",
     "XXXX  XX  XX      XX",
     "XXXX  XX  XX      XX",
     "XXXX  XX  XXXXX  XXX",
-    "X  X        XXX  XXX",
+    "X  X        XXX TXXX",
     "X  X  XXXXXXXXXXXXXX",
     "X        XXXXXXXXXXX",
-    "X           XXXXX XX",
+    "X           XXXXXTXX",
     "XXXXXXXX    XXXXX  X",
     "XXXXXXXXXX  XXXXX  X",
     "XXX    XXX         X",
@@ -127,7 +128,7 @@ levelOne = [
     "X                  X",
     "X         XXXXXXXXXX",
     "XXXXXX    XXXXXXXXXX",
-    "X    XXX  XXXXXXXXXX",
+    "XT   XXX  XXXXXXXXXX",
     "XXX  XXX           X",
     "X                  X",
     "X   XXXXXXXXXXXX  XX",
@@ -176,18 +177,19 @@ def setupMaze(level, app):
 
             if character == "T":
                 page = Page(screenX, screenY)
+                maze.append(page)
                 pages.append(page)
     return maze, player, page
 
 # Player movement according to keys
-def onKeyPress(app, key):
-    if key == 'up' or key == 'w':
+def onKeyHold(app, keys):
+    if 'up' in keys or 'w' in keys:
         app.player.moveUp()
-    elif key == 'down' or key == 's':
+    elif 'down' in keys or 's' in keys:
         app.player.moveDown()
-    elif key == 'left' or key == 'a':
+    elif 'left' in keys or 'a' in keys:
         app.player.moveLeft()
-    elif key == 'right' or key == 'd':
+    elif 'right' in keys or 'd' in keys:
         app.player.moveRight()
 
 def onAppStart(app):
