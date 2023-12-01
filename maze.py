@@ -28,13 +28,17 @@ class Page():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.color = 'yellow'
+        self.color = 'green'
         self.gold = 100
         self.visible = True
     
     # Method to hide the pages when they are walked over
     def hide(self):
         self.visible = False
+    
+    # def redrawAll(self):
+    #     if self.visible:
+    #         drawRect(self.x, self.y, 10, 10, fill=self.color)
     
 # Player class
 class Player():
@@ -140,7 +144,7 @@ def setupMaze(level, app):
             screenX = mazeX + x * 24
             screenY = mazeY + y * 24
     
-    # Hardd-coding the position
+    # Hard-coding the position
     # maze = []
     # for y in range(len(level)):
     #     for x in range(len(level[y])):
@@ -158,7 +162,7 @@ def setupMaze(level, app):
 
                 walls.append((screenX, screenY))
                 # print was just a test to see if all x, y coords were being tracked
-                print(walls)
+                # print(walls)
 
             if character == "P":
                 player = Player(screenX, screenY)
@@ -180,23 +184,22 @@ def onKeyPress(app, key):
         app.player.moveRight()
 
 def onAppStart(app):
-    app.maze, app.player, pages = setupMaze(levels[1], app) 
+    app.maze, app.player,app.page = setupMaze(levels[1], app) 
 
 def redrawAll(app):
-    for item in app.maze + [app.player]:
+    for item in app.maze + [app.player] + [app.page]:
         if isinstance(item, Pen):
             drawRect(item.x, item.y, 20, 20, fill=item.color, border=item.color)
         elif isinstance(item, Player):
             drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
         elif isinstance(item, Page):
-            if item.visible:
-                drawRect(item.x, item.y, 10, 10, fill=item.color, border='black')
+            drawRect(item.x, item.y, 20, 20, fill=item.color, border='black')
     
     # Check collision between player and pages, and add gold if collision is made
     # Hiding feature not working at the moment
     for page in pages:
         if app.player.isCollision(page):
-            app.player.gold = page.gold
+            app.player.gold += page.gold
             print("Player Gold: {}".format(app.player.gold))
             page.hide()
 
