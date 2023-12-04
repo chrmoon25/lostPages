@@ -11,8 +11,8 @@ import random
 import math
 
 def onAppStart(app):
-    app.rows = 8
-    app.cols = 8
+    app.rows = 10
+    app.cols = 10
     app.boardLeft = 50
     app.boardTop = 75
     app.boardWidth = 400
@@ -20,7 +20,7 @@ def onAppStart(app):
     app.cellBorderWidth = 2
     app.selection = (0, 0)
     ############################################################################
-    app.words = ["dog", "CAT", "RAT", "HAT", "MAT", "BAT"]  # Words to find (test practice, will use txt later on)
+    app.words = ["DOG", "CAT", "RAT", "HAT", "MAT", "BAT"]  # Words to find (test practice, will use txt later on)
     app.board = generateBoard(app.rows, app.cols, app.words)
     app.selectedCells = [] ###
     app.wordLines = [] ###
@@ -42,11 +42,11 @@ def onMousePress(app, mouseX, mouseY): ###
         print(app.selectedCells)
 
 def redrawAll(app):
-    drawBoardBorder(app)
     drawBoard(app)
     drawWordLines(app)
     for cell in app.selectedCells:
         drawSelectedCell(app, cell)
+    drawBoardBorder(app)
 
 # CITATION: I used some solver logic in http://www.krivers.net/15112-f18/notes/notes-wordsearch.html to help with generating the board (theirs was hard-coded).
 # (CMU 15-112: Fundamentals of Programming and Computer Science, Class Notes: Understanding Word Search, Fall 18)
