@@ -190,6 +190,7 @@ class Ghost():
     # Used for variable names and pseudocode: https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
     # Understanding implementation (heuristic via manhattan distance), pseudocode: https://www.geeksforgeeks.org/a-search-algorithm/
     # Example tutorial: https://www.youtube.com/watch?time_continue=4&v=crDPaKwDnDY&embeds_referring_euri=https%3A%2F%2Fwww.google.com%2F&source_ve_path=MjM4NTE&feature=emb_title
+    # Backtracking (?) for a* https://stackoverflow.com/questions/42884863/a-star-algorithm-understanding-the-f-g-h-scores
 
     def heuristic(self, a, b):
         # calculates manhattan distance between the ghost (start) and player (target)
@@ -197,10 +198,11 @@ class Ghost():
 
     # this is my a* implementation 
     def AStar(self, start, target, walls):
-        # openSet is set of positions that are to be explored
+        # toVisit is set of positions that are to be explored
         toVisit = {start}
-        # closedSet is places alr visited
+        # visited is places alr visited
         visited = set()
+        print(visited)
         # helps to backtrack to make shortest distance
         stepBack = dict()
 
