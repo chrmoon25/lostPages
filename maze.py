@@ -18,6 +18,7 @@ import random
 walls = []
 pages = []
 ghosts = []
+portalEscape = []
 levels = [""]
 wallWidth = 24 
 app.background = 'black'
@@ -34,8 +35,6 @@ class Player():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.color = 'blue'
-        self.gold = 0
         # self.move = False
     
     # Method to check the collision between the player and other objects in the maze
@@ -94,7 +93,6 @@ class Page():
         self.x = x
         self.y = y
         self.visible = True
-        self.gold = 100
 
     # Method to hide the pages when they are walked over
     # FIX THIS!!!
@@ -105,7 +103,6 @@ class Ghost():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.gold = 25
         self.direction = random.choice(['up', 'down', 'left', 'right'])
 
 
@@ -298,7 +295,7 @@ levelOne = [
     "X X    X X  XX XXX X",
     "X   XX       X   X X",
     "X X  XXXXXXXGXX  X X",
-    "X    X  X    X     X",
+    "X G  X  X    X     X",
     "X XXXX TX XXXX XX XX",
     "X X    XX   X      X",
     "X X XXXX  XXXXXXXX X",
@@ -361,6 +358,7 @@ def setupMaze(level, app):
 
             if character == "O":
                 portal = Portal(screenX, screenY)
+                walls.append((screenX, screenY))
                 
     return maze, player, page, ghost, portal
 
@@ -382,62 +380,34 @@ def onKeyHold(app, keys):
 
     app.player.move(dx, dy, walls)
 
+def processGif(filePath, width, height):
+    gif = Image.open(filePath)
+    spriteList = []
+    
+    for frame in range(gif.n_frames):
+        gif.seek(frame)
+        resizedFrame = gif.resize((width, height))
+        cmu_image = CMUImage(resizedFrame)
+        spriteList.append(cmu_image)
+    
+    return spriteList
+
 def onAppStart(app):
     app.counter = 0
     app.framesPerStep = 5
-    # app.steps = 1000
-    app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
-
-    # CITATION: OOP Part 2 & TP Tech Lecture on how to load gifs - https://www.cs.cmu.edu/~112/lecture/15112_F23_Lec2_Week12_OOP2_inked.pdf
-    ghostGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif')
-    app.ghostSpriteList = []
-    for frame in range(ghostGif.n_frames):
-        #Set the current frame
-        ghostGif.seek(frame)
-        #Resize the image
-        fr = ghostGif.resize((20, 20))
-        #Flip the image
-        # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
-        #Convert to CMUImage
-        fr = CMUImage(fr)
-        #Put in our sprite list
-        app.ghostSpriteList.append(fr)
-
-    playerGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif')
-    app.playerSpriteList = []
-    for frame in range(playerGif.n_frames):
-        playerGif.seek(frame)
-        fr = playerGif.resize((24, 24))
-        fr = CMUImage(fr)
-        app.playerSpriteList.append(fr)
-    
-    pageGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif')
-    app.pageSpriteList = []
-    for frame in range(pageGif.n_frames):
-        pageGif.seek(frame)
-        fr = pageGif.resize((20, 20))  # Resize to 24x24 pixels
-        cmu_image = CMUImage(fr)
-        app.pageSpriteList.append(cmu_image)
-
-    portalGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/portal.gif')
-    app.portalSpriteList = []
-    for frame in range(portalGif.n_frames):
-        portalGif.seek(frame)
-        fr = portalGif.resize((40, 40))  # Resize to 24x24 pixels
-        cmu_image = CMUImage(fr)
-        app.portalSpriteList.append(cmu_image)
-    
-    wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
-    app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
-
-    print(app.playerSpriteList)
-    print(app.ghostSpriteList)
-    print(app.pageSpriteList)
-    print(app.portalSpriteList)
-
-
     app.spriteCounter = 0
     app.stepsPerSecond = 500
+    app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
+
+    app.playerSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif', 24, 24)
+    app.ghostSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif', 20, 20)
+    app.pageSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif', 20, 20)
+    app.portalSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/portal.gif', 40, 40)
+    app.heartSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/heart.gif', 40, 40)
+
+        
+    wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
+    app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
 
 def onStep(app):
     app.counter += 1
@@ -462,8 +432,6 @@ def redrawAll(app):
     # Hiding feature not working at the moment
     for page in pages:
         if app.player.isCollision(page):
-            app.player.gold += page.gold
-            print("Player Gold: {}".format(app.player.gold))
             page.destroy()
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
     
