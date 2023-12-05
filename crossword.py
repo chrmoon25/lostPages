@@ -4,6 +4,7 @@ import math
 import time
 
 def onAppStart(app):
+    app.background = 'brown'
     app.rows = 10
     app.cols = 10
     app.boardLeft = 50

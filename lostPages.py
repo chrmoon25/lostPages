@@ -3,8 +3,12 @@
 # Wall image: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
 # Page sprite: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
 # Portal gif: https://www.pinterest.com/pin/5770305765823550/ 
+# Heart: https://tenor.com/search/pixel-heart-gifs
 # Ghosts: https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.deviantart.com%2Fandwise1121%2Fart%2FGhost-idle-892396700&psig=AOvVaw3eGvgNnC5_5xCprYBaPUS2&ust=1701499213399000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJjN-dXQ7YIDFQAAAAAdAAAAABAD
 # cite gif source (mike)
+## FONTS: https://piazza.com/class/lkq6ivek5cg1bc/post/2217
+## https://academy.cs.cmu.edu/docs/label
+# game over: https://pngimg.com/image/83319
 
 from cmu_graphics import *
 from PIL import Image
@@ -18,7 +22,8 @@ import random
 walls = []
 pages = []
 ghosts = []
-portalEscape = []
+# hearts = 3
+portalPosition = []
 levels = [""]
 wallWidth = 24 
 app.background = 'black'
@@ -28,14 +33,37 @@ class Pen():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        # self.color = 'white'
+
+# class Heart():
+#     def __init__(self, x, y):
+#         self.x = x
+#         self.y = y
+#         self.hearts = 3
+
+#     def loseHeart(self):
+#         self.hearts -= 1
+
+    # def draw(self, app):
+    #     drawImage(app.heartSpriteList[0], self.x, self.y, align='center')
+
+    # def drawHearts(self, app):
+    #     for i in range(3):
+    #         heart = Heart(50, 50 + i * 50)
+    #         heart.draw(app)
 
 # Player class
 class Player():
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.hearts = 3
+        self.lastCollideTime = 0
+        self.collideTime = 60
+        self.pagesCollected = 0
         # self.move = False
+
+    def loseHeart(self):
+        self.hearts -= 1
     
     # Method to check the collision between the player and other objects in the maze
     # Includes pages and later on, enemies
@@ -48,6 +76,7 @@ class Player():
             return True
         else:
             return False
+        
         
     def wallCollision(self, dx, dy, walls):
         new_x = self.x + dx
@@ -112,7 +141,7 @@ class Ghost():
         b = self.y - other.y
         distance = math.sqrt((a**2) + (b**2))
         # Going with a distance of less than 5 (distance calculated with Py. Theorum)
-        if distance < 6:
+        if distance < 10:
             return True
         else:
             return False
@@ -126,15 +155,13 @@ class Ghost():
             dy = -2
         if self.direction == 'left':
             dx = -2
-            # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
         if self.direction == 'right':
             dx = 2
 
-        
-        # moveX = self.x + dx
-        # moveY = self.y + dy
+        moveX = self.x + dx
+        moveY = self.y + dy   
 
-        if self.wallCollision(dx, dy, walls):
+        if self.wallCollision(dx, dy, walls) and (moveX, moveY) not in portalPosition:
             self.x += dx
             self.y += dy
         else:
@@ -175,13 +202,6 @@ class Ghost():
 
         return True
 
-
-    # CITATION: Used for pathfinding with BFS (Later changed to *Star)
-    # https://www.cs.cmu.edu/~112/notes/student-tp-guides/Pathfinding.pdf
-    # https://en.wikipedia.org/wiki/Breadth-first_search 
-    # https://favtutor.com/blogs/breadth-first-search-python
-    # putting this here for reference - https://favtutor.com/blogs/breadth-first-search-python
-
     # CITATION: Used for pathfinding with A*
     # https://en.wikipedia.org/wiki/A*_search_algorithm#:~:text=A*%20is%20an%20informed%20search,shortest%20time%2C%20etc.).
     # Used for variable names and pseudocode: https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
@@ -199,7 +219,6 @@ class Ghost():
         toVisit = {start}
         # visited is places alr visited
         visited = set()
-        print(visited)
         # helps to backtrack to make shortest distance
         stepBack = dict()
 
@@ -299,8 +318,8 @@ levelOne = [
     "X XXXX TX XXXX XX XX",
     "X X    XX   X      X",
     "X X XXXX  XXXXXXXX X",
-    "X X   X   X   X    X",
-    "X XXX X XXX X XXXX X",
+    "X X   X   X      X X",
+    "X XXX X XXX XX  XX X",
     "X     X     X   X  X",
     "XXXXXXXXXXXXXXXOXXXX",
 ]
@@ -320,6 +339,8 @@ def setupMaze(level, app):
     mazeX = (app.width - mazeWidth * 24) // 2 
     mazeY = (app.height - mazeHeight * 24) // 2 
 
+    # heart = Heart(50, 50)
+
     # Maze dimensions - if the playing screen is 700 x 700 and the actual maze is 600 x 600...
     # Then we can fit around 24 blocks down and across
     for y in range(mazeHeight):
@@ -328,8 +349,8 @@ def setupMaze(level, app):
             screenX = mazeX + x * 24
             screenY = mazeY + y * 24
 
-            playerX = app.width//2
-            playerY = app.height//2
+            # playerX = app.width//2
+            # playerY = app.height//2
 
             # Each letter refers to it's maze letter counterpart
             # X is the walls
@@ -358,21 +379,40 @@ def setupMaze(level, app):
 
             if character == "O":
                 portal = Portal(screenX, screenY)
-                walls.append((screenX, screenY))
+                portalPosition.append((screenX, screenY))
                 
     return maze, player, page, ghost, portal
 
 
+def onMousePress(app, mouseX, mouseY):
+    if app.paused:
+        labelWidth = 150
+        labelHeight = 45
+        
+        labelX = (app.width - labelWidth) // 2
+        labelY = (app.height - labelHeight) // 2 + 75
+        
+        # Check if the click event occurred within the rectangle area
+        if labelX < mouseX < labelX + labelWidth and labelY < mouseY < labelY + labelHeight:
+            # Restart the game
+            app.paused = False
+            app.player.hearts = 3
+            app.player.pagesCollected = 0
+            # Reset other necessary game variables and elements
+            app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
+
+
 def onKeyHold(app, keys):
     dx, dy = 0, 0
-    if 'up' in keys or 'w' in keys:
-        dy = -5
-    elif 'down' in keys or 's' in keys:
-        dy = 5
-    elif 'left' in keys or 'a' in keys:
-        dx = -5
-    elif 'right' in keys or 'd' in keys:
-        dx = 5
+    if app.paused == False:
+        if 'up' in keys or 'w' in keys:
+            dy = -5
+        elif 'down' in keys or 's' in keys:
+            dy = 5
+        elif 'left' in keys or 'a' in keys:
+            dx = -5
+        elif 'right' in keys or 'd' in keys:
+            dx = 5
 
     # Multiply by the step size you want to move
     # dx *= stepSize
@@ -393,28 +433,50 @@ def processGif(filePath, width, height):
     return spriteList
 
 def onAppStart(app):
+    app.paused = False
     app.counter = 0
     app.framesPerStep = 5
     app.spriteCounter = 0
-    app.stepsPerSecond = 500
+    app.stepsPerSecond = 300
     app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
 
     app.playerSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif', 24, 24)
     app.ghostSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif', 20, 20)
     app.pageSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif', 20, 20)
     app.portalSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/portal.gif', 40, 40)
-    app.heartSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/heart.gif', 40, 40)
+    app.heartSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/heart.gif', 28, 28)
+    # app.gameOverSprite = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.gif', 400, 250)
 
         
     wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
     app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
 
+    # gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver1.png')
+    gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.png')
+    app.gameOver = CMUImage(gameOver) 
+
+    # gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.png')
+    # app.gameOverSprite = CMUImage(gameOver) 
+    # # .resize((250, 250))
+
 def onStep(app):
-    app.counter += 1
-    if app.counter % app.framesPerStep == 0:
-        app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
+    if app.paused == False:
+        app.counter += 1
+        if app.counter % app.framesPerStep == 0:
+            app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
+
+        app.player.lastCollideTime += 1
+        for ghost in ghosts:
+            if app.player.isCollision(ghost) and app.player.lastCollideTime >= app.player.collideTime:
+                print("YOU DIED!!!")
+                app.player.loseHeart()
+                app.player.lastCollideTime = 0
+
+        if app.player.hearts <= 0:
+            app.paused = True
 
 def redrawAll(app):
+
     for item in app.maze + [app.player] + [app.page] + [app.ghost] + [app.portal]:
         if isinstance(item, Pen):
             drawImage(app.wallSprite, item.x, item.y, align = 'center')
@@ -427,23 +489,60 @@ def redrawAll(app):
         elif isinstance(item, Portal):
             drawImage(app.portalSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
 
+    pageText = f"pages collected: {app.player.pagesCollected}/3"
+    ### FIX THIS IODEHWIQODEJWIQODJE
+    textX = app.width - 620
+    textY = 25
+    # fontPath = '/Users/jiynmn/Desktop/15-112/lostPages/assets/PixelifySans-Medium.ttf'
+    # gameFont = ImageFont.truetype(fontPath, size=13)
+    drawLabel(pageText, textX, textY, fill = 'white', bold = True, size = 13)
+
+
+    heartSpacing = 30  # Adjust this value to manage the spacing between hearts
+    heartX = app.width - 25  # Starting x-coordinate for hearts
+    heartY = 25
     
-    # Check collision between player and pages, and add gold if collision is made
-    # Hiding feature not working at the moment
+    for i in range(app.player.hearts):
+        newHeartX = heartX - (i * heartSpacing)
+        drawImage(app.heartSpriteList[app.spriteCounter], newHeartX, heartY, align='center')
+
+    if app.paused == True:
+        drawRect(0, 0, app.width, app.height, fill='black')
+        drawImage(app.gameOver, 350, 310, align = 'center')
+
+        labelText = 'Click to Restart!'
+        labelWidth = 150
+        labelHeight = 45
+        
+        labelX = (app.width - labelWidth) // 2
+        labelY = (app.height - labelHeight) // 2 + 75
+        
+        drawRect(labelX, labelY, labelWidth, labelHeight, fill='grey')
+        drawLabel(labelText, labelX + labelWidth // 2, labelY + labelHeight // 2, fill='black', align='center', size = 14)
+
+
+
     for page in pages:
         if app.player.isCollision(page):
             page.destroy()
+            app.player.pagesCollected += 1
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
+
+    if app.player.isCollision(app.portal):
+        print("woohoo!")
     
     for ghost in ghosts:
-        ghost.move()
+        if app.paused == False:
+            ghost.move()
 
-        if app.player.isCollision(ghost) or app.ghost.isCollision(app.player):
-            print("YOU DIED!!!")
+        # if app.player.isCollision(ghost):
+        #     print("YOU DIED!!!")
+        #     app.player.loseHeart()
+                
 
         if ghost.isClose(app.player):
-            print("ghost is CLOSE!")
             ghost.chase(app.player)
+    
 
         
  
