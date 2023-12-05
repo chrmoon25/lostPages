@@ -1,19 +1,15 @@
 ########## NOTES ##########
 # Player sprite: https://kyunt.itch.io/purple-thief-player-animation-enemies-items
-# Book sprite: https://wifflegif.com/gifs/706281-pixel-art-spell-gif
 # Wall image: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
 # Page sprite: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
-# Potion sprites: https://wiki.hypixel.net/Potions
 # Portal gif: https://www.pinterest.com/pin/5770305765823550/ 
 # Ghosts: https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.deviantart.com%2Fandwise1121%2Fart%2FGhost-idle-892396700&psig=AOvVaw3eGvgNnC5_5xCprYBaPUS2&ust=1701499213399000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJjN-dXQ7YIDFQAAAAAdAAAAABAD
 # cite gif source (mike)
-# 
 
 from cmu_graphics import *
 from PIL import Image
 import math
 import random
-# import time
 
 
 # CITATION: I followed parts of a tutorial from "Tokyo EdTech" from YouTube - https://www.youtube.com/watch?v=inocKE13DEA&list=PLlEgNdBJEO-lNDJgg90fmfAq9RzORkQWP
@@ -59,10 +55,10 @@ class Player():
         new_y = self.y + dy
 
         # Check if any part of the player will collide with a wall
-        player_left = new_x - 7  # Adjust  player's left edge
-        player_right = new_x + 7  # Adjust player's right edge
-        player_top = new_y - 10  # Adjust player's top edge
-        player_bottom = new_y + 10  # Adjust player's bottom edge
+        player_left = new_x - 7  # player's left edge
+        player_right = new_x + 7  #  player's right edge
+        player_top = new_y - 10  #  player's top edge
+        player_bottom = new_y + 10  #  player's bottom edge
 
         for wall_x, wall_y in walls:
             # Adjust the wall's sides considering its width (12 but 11 jsut in case)
@@ -104,8 +100,6 @@ class Page():
     # FIX THIS!!!
     def destroy(self):
         self.visible = False
-        # self.x = 2000
-        # self.y = 2000
 
 class Ghost():
     def __init__(self, x, y):
@@ -115,6 +109,18 @@ class Ghost():
         self.direction = random.choice(['up', 'down', 'left', 'right'])
 
 
+
+    def isCollision(self, other):
+        a = self.x - other.x
+        b = self.y - other.y
+        distance = math.sqrt((a**2) + (b**2))
+        # Going with a distance of less than 5 (distance calculated with Py. Theorum)
+        if distance < 6:
+            return True
+        else:
+            return False
+        
+        
     def move(self):
         dx, dy = 0, 0
         if self.direction == 'up':
@@ -172,71 +178,77 @@ class Ghost():
 
         return True
 
-    
-    # def chase(self, player):
-    #     start = (self.x, self.y)
-    #     target = (player.x, player.y)
 
-    #     print(start)
-    #     print(target)
-        
-    #     path = self.BFS(start, target, walls) 
-    #     # make the path 
+    # CITATION: Used for pathfinding with BFS (Later changed to *Star)
+    # https://www.cs.cmu.edu/~112/notes/student-tp-guides/Pathfinding.pdf
+    # https://en.wikipedia.org/wiki/Breadth-first_search 
+    # https://favtutor.com/blogs/breadth-first-search-python
+    # putting this here for reference - https://favtutor.com/blogs/breadth-first-search-python
 
-    #     self.moveAlongPath(path)
-    #     # move along the path
-
-    # def BFS(self, start, target, walls):
-    #     pass
-
-    # Inside the Ghost class
+    # CITATION: Used for pathfinding with A*
+    # https://en.wikipedia.org/wiki/A*_search_algorithm#:~:text=A*%20is%20an%20informed%20search,shortest%20time%2C%20etc.).
+    # Used for variable names and pseudocode: https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
+    # Understanding implementation (heuristic via manhattan distance), pseudocode: https://www.geeksforgeeks.org/a-search-algorithm/
+    # Example tutorial: https://www.youtube.com/watch?time_continue=4&v=crDPaKwDnDY&embeds_referring_euri=https%3A%2F%2Fwww.google.com%2F&source_ve_path=MjM4NTE&feature=emb_title
 
     def heuristic(self, a, b):
-        # Calculate the heuristic (Manhattan distance)
+        # calculates manhattan distance between the ghost (start) and player (target)
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+    # this is my a* implementation 
     def AStar(self, start, target, walls):
-        open_set = {start}
-        closed_set = set()
-        came_from = dict()
+        # openSet is set of positions that are to be explored
+        toVisit = {start}
+        # closedSet is places alr visited
+        visited = set()
+        # helps to backtrack to make shortest distance
+        stepBack = dict()
 
-        g_score = {start: 0}
-        f_score = {start: self.heuristic(start, target)}
+        # g will keep track of the actual cost from start position to any position (following best path)
+        gScore = {start: 0}
+        # f stores total estimated cost of the cheapest path (g), this is done by heuristic calculation
+        # heuristic helps an algo find good choices basically (i just kept the function name the same)  
+        fScore = {start: self.heuristic(start, target)}
 
-        while open_set:
-            current = None
-            current_f_score = float('inf')
-            for position in open_set:
-                if f_score[position] < current_f_score:
+
+        # while items in the toVisit path 
+        while toVisit:
+            current = None # lowest f
+            currentfScore = 999999
+            for position in toVisit:
+                if fScore[position] < currentfScore:
                     current = position
-                    current_f_score = f_score[position]
+                    currentfScore = fScore[position]
 
+            # target is found
             if current == target:
+                # make path
                 path = []
-                while current in came_from:
+                # current --> starting position
+                while current in stepBack:
                     path.append(current)
-                    current = came_from[current]
-                return path[::-1]  # Reverse the path to get it from start to target
+                    current = stepBack[current]
+                return path[::-1]  # reverse the path to get it from start to target
 
-            open_set.remove(current)
-            closed_set.add(current)
+            toVisit.remove(current)
+            visited.add(current)
 
-            for neighbor in self.get_neighbors(current):
-                if neighbor in closed_set or neighbor in walls:
+            for neighbor in self.getNeighbors(current):
+                if neighbor in visited or neighbor in walls: #skips
                     continue
 
-                tentative_g_score = g_score[current] + 1  # Assuming each move cost is 1
+                newgScore = gScore[current] + 1  # assuming each move cost is 1
 
-                if tentative_g_score < g_score.get(neighbor, float('inf')):
-                    came_from[neighbor] = current
-                    g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, target)
-                    if neighbor not in open_set:
-                        open_set.add(neighbor)
+                if newgScore < gScore.get(neighbor, 999999):
+                    stepBack[neighbor] = current
+                    gScore[neighbor] = newgScore
+                    fScore[neighbor] = newgScore + self.heuristic(neighbor, target)
+                    if neighbor not in toVisit:
+                        toVisit.add(neighbor)
 
-        return None  # If no path found
+        return None  # no path found
 
-    def get_neighbors(self, position):
+    def getNeighbors(self, position):
         x, y = position
         neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
         return neighbors
@@ -253,32 +265,23 @@ class Ghost():
 
     def moveAlongPath(self, path, walls):
         if path:
-            next_x, next_y = path[0]
-            dx = next_x - self.x
-            dy = next_y - self.y
+            nextX, nextY = path[0]
+            dx = nextX - self.x
+            dy = nextY - self.y
 
             if self.wallCollision(dx, dy, walls):
-                self.x = next_x
-                self.y = next_y
+                self.x = nextX
+                self.y = nextY
 
             # Remove the first position as it's reached
             path.pop(0)
-    # CITATION: Used for pathfinding with BFS
-    # https://www.cs.cmu.edu/~112/notes/student-tp-guides/Pathfinding.pdf
-    # https://en.wikipedia.org/wiki/Breadth-first_search 
-    # https://favtutor.com/blogs/breadth-first-search-python
-    # refine this part more 
-
-# putting this here for reference - https://favtutor.com/blogs/breadth-first-search-python
-    
-
 
 # Hard-coded maze (planning to add more levels in the future)
 # Tried recursive backtracing but it was a mess so I'm sticking with hard-code right now
 
 levelOne = [
     "XXXXXXXXXXXXXXXXXXXX",
-    "XP                 X",
+    "XP               X X",
     "X X   XXXXXXXX   X X",
     "X XXX      X     X X",
     "X     X  X X XX XX X",
@@ -383,6 +386,7 @@ def onAppStart(app):
     # app.steps = 1000
     app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
 
+    # CITATION: OOP Part 2 & TP Tech Lecture on how to load gifs - https://www.cs.cmu.edu/~112/lecture/15112_F23_Lec2_Week12_OOP2_inked.pdf
     ghostGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif')
     app.ghostSpriteList = []
     for frame in range(ghostGif.n_frames):
@@ -400,15 +404,9 @@ def onAppStart(app):
     playerGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif')
     app.playerSpriteList = []
     for frame in range(playerGif.n_frames):
-        #Set the current frame
         playerGif.seek(frame)
-        #Resize the image
         fr = playerGif.resize((24, 24))
-        #Flip the image
-        # fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
-        #Convert to CMUImage
         fr = CMUImage(fr)
-        #Put in our sprite list
         app.playerSpriteList.append(fr)
     
     pageGif = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif')
@@ -440,13 +438,9 @@ def onAppStart(app):
     app.stepsPerSecond = 500
 
 def onStep(app):
-    # app.moveSpeed = 5
-    #Set spriteCounter to next frame
-
     app.counter += 1
     if app.counter % app.framesPerStep == 0:
         app.spriteCounter = (app.spriteCounter + 1) % len(app.playerSpriteList)
-    
 
 def redrawAll(app):
     for item in app.maze + [app.player] + [app.page] + [app.ghost] + [app.portal]:
@@ -474,12 +468,14 @@ def redrawAll(app):
     for ghost in ghosts:
         ghost.move()
 
-        if app.player.isCollision(ghost):
+        if app.player.isCollision(ghost) or app.ghost.isCollision(app.player):
             print("YOU DIED!!!")
 
         if ghost.isClose(app.player):
             print("ghost is CLOSE!")
             ghost.chase(app.player)
+
+        
  
 
     

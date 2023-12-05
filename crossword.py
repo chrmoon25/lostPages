@@ -1,14 +1,7 @@
-########## NOTES ##########
-# FIX BORDER SELECTION WITH WORDS
-# CHANGE FONT/BACKGROUND COLOR
-# ADD TIMER AND LIVES
-# ADD HINTS
-# ORGANIZE INTO CLASSES
-# CENTER PLACEMENT
-
 from cmu_graphics import *
 import random
 import math
+import time
 
 def onAppStart(app):
     app.rows = 10
@@ -24,6 +17,8 @@ def onAppStart(app):
     app.board = generateBoard(app.rows, app.cols, app.words)
     app.selectedCells = [] ###
     app.wordLines = [] ###
+    app.wordBank = []
+    app.wordFound = False
 
 # Cell selection (5.3.3)
 def onMouseMove(app, mouseX, mouseY):
@@ -33,20 +28,6 @@ def onMouseMove(app, mouseX, mouseY):
           app.selection = selectedCell
       else:
           app.selection = selectedCell
-
-def onMousePress(app, mouseX, mouseY): ###
-    selectedCell = getCell(app, mouseX, mouseY)
-    if selectedCell != None:
-        app.selection = selectedCell
-        app.selectedCells.append(selectedCell)
-        print(app.selectedCells)
-
-def redrawAll(app):
-    drawBoard(app)
-    drawWordLines(app)
-    for cell in app.selectedCells:
-        drawSelectedCell(app, cell)
-    drawBoardBorder(app)
 
 # CITATION: I used some solver logic in http://www.krivers.net/15112-f18/notes/notes-wordsearch.html to help with generating the board (theirs was hard-coded).
 # (CMU 15-112: Fundamentals of Programming and Computer Science, Class Notes: Understanding Word Search, Fall 18)
@@ -142,15 +123,70 @@ def drawSelectedCell(app, cell): ####
              borderWidth=app.cellBorderWidth)
     drawLabel(app.board[row][col], cellLeft + cellWidth / 2, cellTop + cellHeight / 2, size=15)
 
-def drawWordLines(app):
-    selected_word = ''.join([app.board[row][col] for (row, col) in app.selectedCells])
-    # TEST - erase later
-    print(selected_word)
-    if selected_word in app.words:
-        print("WORD FOUND")
-        # Draw a stikethrough - so far words found returns correctly
-        # This is only for one word though
-        # Make a list for found words, then reset
+################################################################################
+
+def drawLineThroughWord(app, startRow, startCol, endRow, endCol):
+    cellWidth, cellHeight = getCellSize(app)
+    startX = app.boardLeft + startCol * cellWidth + cellWidth / 2
+    startY = app.boardTop + startRow * cellHeight + cellHeight / 2
+    endX = app.boardLeft + endCol * cellWidth + cellWidth / 2
+    endY = app.boardTop + endRow * cellHeight + cellHeight / 2
+    drawLine(startX, startY, endX, endY, lineWidth=3, fill='red') 
+
+def checkAndUpdateWord(app):
+    selectedWord = ''.join([app.board[row][col] for (row, col) in app.selectedCells])
+    # selectedWord = ''  
+    # for (row, col) in app.selectedCells:
+    #     selectedWord += app.board[row][col]
+
+    if selectedWord in app.words:
+        app.wordBank.append(selectedWord)
+        app.selectedWordCoords = app.selectedCells[:]  # store word coordinates for drawing
+
+        lineCoords = tuple(app.selectedWordCoords[0] + app.selectedWordCoords[-1])
+        # (x1, y1, x2, y2)
+        app.wordLines.append(lineCoords)
+        
+        app.wordFound = True 
+    else:
+        startTime(app) 
+
+    
+def drawLinesThroughWords(app):
+    lines = []
+    for lineCoords in app.wordLines:
+        startRow, startCol, endRow, endCol = lineCoords
+        # Draw the line and append the line coordinates to the list
+        drawLineThroughWord(app, startRow, startCol, endRow, endCol)
+        lines.append(lineCoords)
+
+def startTime(app):
+    app.timerDelay = 3000  # milliseconds (3 seconds)
+    app.startTime = time.time()
+
+def onMousePress(app, mouseX, mouseY):
+    selectedCell = getCell(app, mouseX, mouseY)
+    if selectedCell != None:
+        app.selection = selectedCell
+        app.selectedCells.append(selectedCell)
+        checkAndUpdateWord(app)
+
+def onStep(app):
+    # CITATION: To check for attributes - https://pythonhow.com/how/know-if-an-object-has-an-attribute/#:~:text=To%20check%20if%20an%20object,True%2C%20otherwise%20it%20returns%20False.
+    if hasattr(app, 'startTime'):
+        elapsedTime = time.time() - app.startTime
+        if elapsedTime >= app.timerDelay / 1000:  # Convert timerDelay to seconds for comparison
+            app.selectedCells = []  # Clear selected cells after the time delay
+            del app.startTime  # Remove the timer start time attribute
+            app.timerDelay = None 
+            
+def redrawAll(app):
+    drawBoard(app)
+    for cell in app.selectedCells:
+        drawSelectedCell(app, cell)
+    drawBoardBorder(app)
+    drawLinesThroughWords(app)
+
 
 def main():
     runApp(width=500, height=500)
