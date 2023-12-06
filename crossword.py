@@ -2,6 +2,8 @@ from cmu_graphics import *
 import random
 import math
 import time
+import tkinter as tk
+
 
 def onAppStart(app):
     screenWidth = 700
@@ -17,7 +19,16 @@ def onAppStart(app):
     app.cellBorderWidth = 2
     app.selection = (0, 0)
     ############################################################################
-    app.words = ["PERCY", "GREGOR", "CINDER", "EMMA", "MATILDA", "ALICE", "VIOLET", "KEVIN"]  # Words to find (test practice, will use txt later on)
+    wordPool =  [
+                "PERCY", "GREGOR", "CINDER", "EMMA", "MATILDA", "ALICE", "VIOLET", "KEVIN", "OSAMU", "AUSTEN", 
+                "RIORDAN", "KAFKA", "DAHL", "CAMUS", "CIRCE", "MILLER", "ULYSSES", "HOLMES", "WATCHMEN", 
+                "ISHIGURO", "CHBOKSY", "STEINBECK", "SALINGER", "CARROLL", "HOLES", "ATONEMENT", "CRESS", 
+                "CORALINE", "ORWELL", "WILDE", "PERSUASION", "CARRIE", "DRACULA", "GATSBY"
+                ]
+
+    # CITATION: https://www.geeksforgeeks.org/python-random-sample-function/ 
+    app.words = random.sample(wordPool, 8)
+    
     app.board = generateBoard(app.rows, app.cols, app.words)
     app.selectedCells = [] ###
     app.wordLines = [] ###
@@ -139,10 +150,6 @@ def drawLineThroughWord(app, startRow, startCol, endRow, endCol):
 
 def checkAndUpdateWord(app):
     selectedWord = ''.join([app.board[row][col] for (row, col) in app.selectedCells])
-    # selectedWord = ''  
-    # for (row, col) in app.selectedCells:
-    #     selectedWord += app.board[row][col]
-
     if selectedWord in app.words:
         app.wordBank.append(selectedWord)
         app.selectedWordCoords = app.selectedCells[:]  # store word coordinates for drawing
@@ -155,6 +162,14 @@ def checkAndUpdateWord(app):
     else:
         startTime(app) 
 
+    # https://www.geeksforgeeks.org/how-to-close-a-window-in-tkinter/#:~:text=To%20close%20a%20tkinter%20window%2C%20we%20can%20use%20the%20destroy,with%20the%20main%20tkinter%20window.
+    if len(app.wordBank) == len(app.words):
+        root = tk.Tk()  # Assuming 'root' is your main window instance
+        root.destroy()
+
+def update_paused_state(paused):
+    with open('paused_state.txt', 'w') as file:
+        file.write(str(paused))
     
 def drawLinesThroughWords(app):
     lines = []

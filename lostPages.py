@@ -15,6 +15,10 @@ from PIL import Image
 import math
 import random
 
+# IMPORTED MODULES
+# https://www.youtube.com/watch?v=CUFIjz_U7Mo 
+# https://youtu.be/AAfy0-AWg-A?si=bg1AUZNPb0yGkCW4
+import subprocess
 
 # CITATION: I followed parts of a tutorial from "Tokyo EdTech" from YouTube - https://www.youtube.com/watch?v=inocKE13DEA&list=PLlEgNdBJEO-lNDJgg90fmfAq9RzORkQWP
 # although they used turtle to help build their maze.
@@ -28,6 +32,7 @@ levels = [""]
 wallWidth = 24 
 app.background = 'black'
 app.won = False
+app.lost = False
 
 # Class to represent the walls (each little block)
 class Pen():
@@ -376,10 +381,11 @@ def setupMaze(level, app):
     # app.pages = []
     # app.ghosts = [] 
     # app.portalPosition = []
-
+ 
+ # app.paused or
 
 def onMousePress(app, mouseX, mouseY):
-    if app.paused or app.won:
+    if app.won or app.lost:
         labelWidth = 150
         labelHeight = 45
         
@@ -387,8 +393,9 @@ def onMousePress(app, mouseX, mouseY):
         labelY = (app.height - labelHeight) // 2 + 75
         
         if labelX < mouseX < labelX + labelWidth and labelY < mouseY < labelY + labelHeight:
-            app.paused = False
+            # app.paused = False
             app.won = False
+            app.lost = False
             app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
             # restartGame(app)
 
@@ -420,6 +427,7 @@ def processGif(filePath, width, height):
     return spriteList
 
 def onAppStart(app):
+    global paused
     app.paused = False
     app.counter = 0
     app.framesPerStep = 5
@@ -432,8 +440,6 @@ def onAppStart(app):
     app.pageSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif', 20, 20)
     app.portalSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/portal.gif', 40, 40)
     app.heartSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/heart.gif', 28, 28)
-    # app.gameOverSprite = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.gif', 400, 250)
-
         
     wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
     app.wallSprite = CMUImage(wallImage.resize((24,24))) 
@@ -458,7 +464,7 @@ def onStep(app):
                 app.player.lastCollideTime = 0
 
         if app.player.hearts <= 0:
-            app.paused = True
+            app.lost = True
         
         if app.player.pagesCollected == 3 and app.player.isCollision(app.portal):
             app.won = True
@@ -492,7 +498,7 @@ def redrawAll(app):
         newHeartX = heartX - (i * heartSpacing)
         drawImage(app.heartSpriteList[app.spriteCounter], newHeartX, heartY, align='center')
 
-    if app.paused == True:
+    if app.lost == True:
         drawRect(0, 0, app.width, app.height, fill='black')
 
         labelText = 'click to try again!'
@@ -522,6 +528,7 @@ def redrawAll(app):
 
     for page in pages:
         if app.player.isCollision(page):
+            subprocess.Popen(['python3', '/Users/jiynmn/Desktop/15-112/lostPages/crossword.py'])
             page.destroy()
             app.player.pagesCollected += 1
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
@@ -541,6 +548,18 @@ def redrawAll(app):
 
         if ghost.isClose(app.player):
             ghost.chase(app.player)
+
+
+# app.player.hearts = 3
+    # app.player.pagesCollected = 0
+    # app.player.lastCollideTime = 0
+    # app.player.collideTime = 60
+    
+    # app.walls = []
+    # app.pages = []
+    # app.ghosts = [] 
+    # app.portalPosition = []
+
 
 def main():
     runApp(width=700, height=700)
