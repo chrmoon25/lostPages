@@ -1,21 +1,27 @@
-########## NOTES ##########
-# Player sprite: https://kyunt.itch.io/purple-thief-player-animation-enemies-items
-# Wall image: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
-# Page sprite: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
-# Portal gif: https://www.pinterest.com/pin/5770305765823550/ 
-# Heart: https://tenor.com/search/pixel-heart-gifs
+# CITATIONS FOR GIFS/IMAGES:
 # Ghosts: https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.deviantart.com%2Fandwise1121%2Fart%2FGhost-idle-892396700&psig=AOvVaw3eGvgNnC5_5xCprYBaPUS2&ust=1701499213399000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCJjN-dXQ7YIDFQAAAAAdAAAAABAD
-# cite gif source (mike)
-## FONTS: https://piazza.com/class/lkq6ivek5cg1bc/post/2217
-## https://academy.cs.cmu.edu/docs/label
-# game over: https://pngimg.com/image/83319
+# "You Win": https://www.greekcomics.gr/forums/index.php?/profile/25133-tik/content/page/25/&type=forums_topic_post 
+# Player: https://kyunt.itch.io/purple-thief-player-animation-enemies-items
+# Pages: https://pixeldungeon.fandom.com/wiki/Scroll_of_Mirror_Image 
+# Walls: https://superwalrusland.com/ohr/issue26/pa/pixelart.html 
+# Portal: https://www.pinterest.com/pin/5770305765823550/ 
+# Hearts: https://tenor.com/search/pixel-heart-gifs
+# "Game Over": https://pngimg.com/image/83319
+
+# CITATIONS FOR FONTS:
+# https://fonts.google.com/specimen/Pixelify+Sans
+# https://fonts.google.com/specimen/Metamorphous?query=meta 
+
+# CITATIONS FOR COLORS/HOW TO UPLOAD FONTS:
+# Colors - https://academy.cs.cmu.edu/docs/label
+# Fonts - https://piazza.com/class/lkq6ivek5cg1bc/post/2217
 
 from cmu_graphics import *
 from PIL import Image
 import math
 import random
 
-# IMPORTED MODULES
+# CITATION: I used the videos below to help me run my crossword.py in this file using subprocess
 # https://www.youtube.com/watch?v=CUFIjz_U7Mo 
 # https://youtu.be/AAfy0-AWg-A?si=bg1AUZNPb0yGkCW4
 import subprocess
@@ -72,10 +78,10 @@ class Player():
         new_y = self.y + dy
 
         # Check if any part of the player will collide with a wall
-        player_left = new_x - 7  # player's left edge
-        player_right = new_x + 7  #  player's right edge
-        player_top = new_y - 10  #  player's top edge
-        player_bottom = new_y + 10  #  player's bottom edge
+        player_left = new_x - 7  # player's left 
+        player_right = new_x + 7  #  right 
+        player_top = new_y - 10  #  top 
+        player_bottom = new_y + 10  #  bottom 
 
         for wall_x, wall_y in walls:
             # Adjust the wall's sides considering its width (12 but 11 jsut in case)
@@ -370,20 +376,6 @@ def setupMaze(level, app):
                 
     return maze, player, page, ghost, portal
 
-# def restartGame(app):
-    # app.player = Player(50, 50) 
-    # app.player.hearts = 3
-    # app.player.pagesCollected = 0
-    # app.player.lastCollideTime = 0
-    # app.player.collideTime = 60
-    
-    # app.walls = []
-    # app.pages = []
-    # app.ghosts = [] 
-    # app.portalPosition = []
- 
- # app.paused or
-
 def onMousePress(app, mouseX, mouseY):
     if app.won or app.lost:
         labelWidth = 150
@@ -393,12 +385,9 @@ def onMousePress(app, mouseX, mouseY):
         labelY = (app.height - labelHeight) // 2 + 75
         
         if labelX < mouseX < labelX + labelWidth and labelY < mouseY < labelY + labelHeight:
-            # app.paused = False
             app.won = False
             app.lost = False
             app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
-            # restartGame(app)
-
 
 def onKeyHold(app, keys):
     dx, dy = 0, 0
@@ -423,11 +412,9 @@ def processGif(filePath, width, height):
         resizedFrame = gif.resize((width, height))
         cmu_image = CMUImage(resizedFrame)
         spriteList.append(cmu_image)
-    
     return spriteList
 
 def onAppStart(app):
-    global paused
     app.paused = False
     app.counter = 0
     app.framesPerStep = 5
@@ -435,6 +422,7 @@ def onAppStart(app):
     app.stepsPerSecond = 300
     app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
 
+    # ADD CITATION
     app.playerSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif', 24, 24)
     app.ghostSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/ghost.gif', 20, 20)
     app.pageSpriteList = processGif('/Users/jiynmn/Desktop/15-112/lostPages/assets/scroll.gif', 20, 20)
@@ -444,7 +432,6 @@ def onAppStart(app):
     wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
     app.wallSprite = CMUImage(wallImage.resize((24,24))) 
 
-    # gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver1.png')
     gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.png')
     app.gameOver = CMUImage(gameOver) 
 
@@ -470,7 +457,6 @@ def onStep(app):
             app.won = True
 
 def redrawAll(app):
-
     for item in app.maze + [app.player] + [app.page] + [app.ghost] + [app.portal]:
         if isinstance(item, Pen):
             drawImage(app.wallSprite, item.x, item.y, align = 'center')
@@ -545,21 +531,8 @@ def redrawAll(app):
     for ghost in ghosts:
         if app.paused == False:
             ghost.move()
-
         if ghost.isClose(app.player):
             ghost.chase(app.player)
-
-
-# app.player.hearts = 3
-    # app.player.pagesCollected = 0
-    # app.player.lastCollideTime = 0
-    # app.player.collideTime = 60
-    
-    # app.walls = []
-    # app.pages = []
-    # app.ghosts = [] 
-    # app.portalPosition = []
-
 
 def main():
     runApp(width=700, height=700)
