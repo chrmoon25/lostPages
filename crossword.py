@@ -22,7 +22,8 @@ def onAppStart(app):
                 "ISHIGURO", "CHBOKSY", "STEINBECK", "SALINGER", "CARROLL", "HOLES", "ATONEMENT", "CRESS", 
                 "CORALINE", "ORWELL", "WILDE", "PERSUASION", "CARRIE", "DRACULA", "GATSBY"
                 ]
-    # CITATION: How to use random to select items in a list - https://www.geeksforgeeks.org/python-random-sample-function/ 
+    # CITATION: Learned how to use random to select items in a list 
+    # https://www.geeksforgeeks.org/python-random-sample-function/ 
     app.words = random.sample(wordPool, 8)
     app.board = generateBoard(app.rows, app.cols, app.words)
     app.selectedCells = [] 
@@ -120,7 +121,7 @@ def drawSelectedCell(app, cell):
     row, col = cell
     cellLeft, cellTop = getCellLeftTop(app, row, col)
     cellWidth, cellHeight = getCellSize(app)
-    # This is similar to the drawCell function, but we check if the cell is in the list so it stays filled
+    # this is similar to the drawCell function, but we check if the cell is in the list so it stays filled
     color = 'tan' if cell in app.selectedCells else None
     drawRect(cellLeft, cellTop, cellWidth, cellHeight,
              fill=color, border='saddleBrown',
@@ -149,7 +150,8 @@ def checkAndUpdateWord(app):
     else:
         startTime(app) 
 
-    # CITATION: How to close a window with tkinter - https://www.geeksforgeeks.org/how-to-close-a-window-in-tkinter/#:~:text=To%20close%20a%20tkinter%20window%2C%20we%20can%20use%20the%20destroy,with%20the%20main%20tkinter%20window.
+    # CITATION: How to close a window with tkinter 
+    # https://www.geeksforgeeks.org/how-to-close-a-window-in-tkinter/#:~:text=To%20close%20a%20tkinter%20window%2C%20we%20can%20use%20the%20destroy,with%20the%20main%20tkinter%20window.
     if len(app.wordBank) == len(app.words):
         root = tk.Tk()  
         root.destroy()
@@ -185,7 +187,8 @@ def onMousePress(app, mouseX, mouseY):
         checkAndUpdateWord(app)
 
 def onStep(app):
-    # CITATION: To check for attributes - https://pythonhow.com/how/know-if-an-object-has-an-attribute/#:~:text=To%20check%20if%20an%20object,True%2C%20otherwise%20it%20returns%20False.
+    # CITATION: Learned how to check for attributes 
+    # https://pythonhow.com/how/know-if-an-object-has-an-attribute/#:~:text=To%20check%20if%20an%20object,True%2C%20otherwise%20it%20returns%20False.
     if hasattr(app, 'startTime'):
         elapsedTime = time.time() - app.startTime
         if elapsedTime >= app.timerDelay / 1000:  # convert timerDelay to seconds
