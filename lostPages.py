@@ -527,7 +527,7 @@ def redrawAll(app):
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
 
     if app.player.pagesCollected != 3 and app.player.isCollision(app.portal):
-        pageText = 'You have not collected all the pages!'
+        pageText = 'you have not collected all the pages!'
         ### FIX THIS IODEHWIQODEJWIQODJE
         textX = 350
         textY = 660

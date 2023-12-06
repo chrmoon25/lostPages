@@ -4,17 +4,20 @@ import math
 import time
 
 def onAppStart(app):
-    app.background = 'brown'
+    screenWidth = 700
+    boardWidth = 400
+    
+    app.background = 'linen'
     app.rows = 10
     app.cols = 10
-    app.boardLeft = 50
-    app.boardTop = 75
+    app.boardLeft = (screenWidth - boardWidth) // 2
+    app.boardTop = 60
     app.boardWidth = 400
     app.boardHeight = 400
     app.cellBorderWidth = 2
     app.selection = (0, 0)
     ############################################################################
-    app.words = ["DOG", "CAT", "RAT", "HAT", "MAT", "BAT"]  # Words to find (test practice, will use txt later on)
+    app.words = ["PERCY", "GREGOR", "CINDER", "EMMA", "MATILDA", "ALICE", "VIOLET", "KEVIN"]  # Words to find (test practice, will use txt later on)
     app.board = generateBoard(app.rows, app.cols, app.words)
     app.selectedCells = [] ###
     app.wordLines = [] ###
@@ -75,18 +78,18 @@ def drawBoard(app):
 
 def drawBoardBorder(app):
     drawRect(app.boardLeft, app.boardTop, app.boardWidth, app.boardHeight,
-             fill=None, border='black',
+             fill=None, border='saddleBrown',
              borderWidth=2*app.cellBorderWidth)
 
 def drawCell(app, row, col):
     cellLeft, cellTop = getCellLeftTop(app, row, col)
     cellWidth, cellHeight = getCellSize(app)
     # Cell selection (5.3.3)
-    color = 'cyan' if (row, col) == app.selection else None
+    color = 'tan' if (row, col) == app.selection else 'blanchedAlmond'
     drawRect(cellLeft, cellTop, cellWidth, cellHeight,
-             fill=color, border='black',
+             fill=color, border='saddleBrown',
              borderWidth=app.cellBorderWidth)
-    drawLabel(app.board[row][col], cellLeft + cellWidth/2, cellTop + cellHeight/2, size=15)
+    drawLabel(app.board[row][col], cellLeft + cellWidth/2, cellTop + cellHeight/2, size=15, font='Metamorphous', fill='black')
 
 # CITATION: I used code under 5.3.3 of "Cell Selection" in CS Academy for selected words.
 def getCell(app, x, y):
@@ -118,11 +121,11 @@ def drawSelectedCell(app, cell): ####
     cellLeft, cellTop = getCellLeftTop(app, row, col)
     cellWidth, cellHeight = getCellSize(app)
     # This is similar to the drawCell function, but we check if the cell is in the list so it stays yellow
-    color = 'yellow' if cell in app.selectedCells else None
+    color = 'tan' if cell in app.selectedCells else None
     drawRect(cellLeft, cellTop, cellWidth, cellHeight,
-             fill=color, border='black',
+             fill=color, border='saddleBrown',
              borderWidth=app.cellBorderWidth)
-    drawLabel(app.board[row][col], cellLeft + cellWidth / 2, cellTop + cellHeight / 2, size=15)
+    drawLabel(app.board[row][col], cellLeft + cellWidth / 2, cellTop + cellHeight / 2, size=15, font='Metamorphous', fill='black')
 
 ################################################################################
 
@@ -132,7 +135,7 @@ def drawLineThroughWord(app, startRow, startCol, endRow, endCol):
     startY = app.boardTop + startRow * cellHeight + cellHeight / 2
     endX = app.boardLeft + endCol * cellWidth + cellWidth / 2
     endY = app.boardTop + endRow * cellHeight + cellHeight / 2
-    drawLine(startX, startY, endX, endY, lineWidth=3, fill='red') 
+    drawLine(startX, startY, endX, endY, lineWidth=3, fill='fireBrick') 
 
 def checkAndUpdateWord(app):
     selectedWord = ''.join([app.board[row][col] for (row, col) in app.selectedCells])
@@ -161,6 +164,17 @@ def drawLinesThroughWords(app):
         drawLineThroughWord(app, startRow, startCol, endRow, endCol)
         lines.append(lineCoords)
 
+
+def drawWordBank(app):
+    wordSpacing = (600 - 200) // 4
+    # Since we want spacing of 200 on the other side
+    textStartY = 600
+    textStartX = 200
+
+    for i in range(len(app.words)):
+        drawLabel(app.words[i], textStartX + (i % 4) * wordSpacing, textStartY + (i // 4) * 30,
+                  size=12, font='Metamorphous', fill='black')
+
 def startTime(app):
     app.timerDelay = 3000  # milliseconds (3 seconds)
     app.startTime = time.time()
@@ -187,6 +201,12 @@ def redrawAll(app):
         drawSelectedCell(app, cell)
     drawBoardBorder(app)
     drawLinesThroughWords(app)
+    drawWordBank(app)
+    drawLabel('find all the words to collect the page!', 350, 30, size = 15, font = 'Pixelify Sans SemiBold', fill = 'saddleBrown')
+    drawLabel('words must be selected in the right order!', 350, 480, size = 15, font = 'Pixelify Sans SemiBold', fill = 'saddleBrown')
+    drawLabel('if you mess up, wait 3 seconds for the app to deselect.', 350, 500, size = 15, font = 'Pixelify Sans SemiBold', fill = 'saddleBrown')
+    drawLabel('WORD BANK', 350, 550, size=17, font = 'Pixelify Sans SemiBold', fill = 'saddleBrown')
+
 
 
 def main():
