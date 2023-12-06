@@ -190,6 +190,6 @@ def redrawAll(app):
 
 
 def main():
-    runApp(width=500, height=500)
+    runApp(width=700, height=700)
 
 main()

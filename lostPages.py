@@ -27,29 +27,13 @@ portalPosition = []
 levels = [""]
 wallWidth = 24 
 app.background = 'black'
+app.won = False
 
 # Class to represent the walls (each little block)
 class Pen():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-
-# class Heart():
-#     def __init__(self, x, y):
-#         self.x = x
-#         self.y = y
-#         self.hearts = 3
-
-#     def loseHeart(self):
-#         self.hearts -= 1
-
-    # def draw(self, app):
-    #     drawImage(app.heartSpriteList[0], self.x, self.y, align='center')
-
-    # def drawHearts(self, app):
-    #     for i in range(3):
-    #         heart = Heart(50, 50 + i * 50)
-    #         heart.draw(app)
 
 # Player class
 class Player():
@@ -115,7 +99,6 @@ class Portal():
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.visible = True
 
 class Page():
     def __init__(self, x, y):
@@ -162,6 +145,7 @@ class Ghost():
         moveY = self.y + dy   
 
         if self.wallCollision(dx, dy, walls) and (moveX, moveY) not in portalPosition:
+        # if self.wallCollision(dx, dy, walls):
             self.x += dx
             self.y += dy
         else:
@@ -299,13 +283,13 @@ class Ghost():
 
 levelOne = [
     "XXXXXXXXXXXXXXXXXXXX",
-    "XP               X X",
+    "X                X X",
     "X X   XXXXXXXX   X X",
     "X XXX      X     X X",
     "X     X  X X XX XX X",
     "XXXX  X XX X  G    X",
-    "X TX  X  X XXXX X  X",
-    "X  X XXXXX    X X TX",
+    "X  X  X  X XXXX X  X",
+    "X  X XXXXX    X X  X",
     "X  X        X XXXXXX",
     "XX XXXXXXXXXX      X",
     "X  X   X    XXXX X X",
@@ -314,13 +298,13 @@ levelOne = [
     "X X    X X  XX XXX X",
     "X   XX       X   X X",
     "X X  XXXXXXXGXX  X X",
-    "X G  X  X    X     X",
-    "X XXXX TX XXXX XX XX",
+    "X    X  X    X     X",
+    "X XXXX  X XXXX XX XX",
     "X X    XX   X      X",
     "X X XXXX  XXXXXXXX X",
-    "X X   X   X      X X",
-    "X XXX X XXX XX  XX X",
-    "X     X     X   X  X",
+    "X X   X   XP   T X X",
+    "X XXX X XXX XX TXX X",
+    "X     X     X  TX  X",
     "XXXXXXXXXXXXXXXOXXXX",
 ]
 
@@ -353,9 +337,6 @@ def setupMaze(level, app):
             # playerY = app.height//2
 
             # Each letter refers to it's maze letter counterpart
-            # X is the walls
-            # P is the player (starting at the upper left hand screen)
-            # T is the page (treasure) - this still needs some revision
             if character == "X":
                 pen = Pen(screenX, screenY)
                 maze.append(pen)
@@ -379,27 +360,37 @@ def setupMaze(level, app):
 
             if character == "O":
                 portal = Portal(screenX, screenY)
+                # walls.append((screenX, screenY))
                 portalPosition.append((screenX, screenY))
                 
     return maze, player, page, ghost, portal
 
+# def restartGame(app):
+    # app.player = Player(50, 50) 
+    # app.player.hearts = 3
+    # app.player.pagesCollected = 0
+    # app.player.lastCollideTime = 0
+    # app.player.collideTime = 60
+    
+    # app.walls = []
+    # app.pages = []
+    # app.ghosts = [] 
+    # app.portalPosition = []
+
 
 def onMousePress(app, mouseX, mouseY):
-    if app.paused:
+    if app.paused or app.won:
         labelWidth = 150
         labelHeight = 45
         
         labelX = (app.width - labelWidth) // 2
         labelY = (app.height - labelHeight) // 2 + 75
         
-        # Check if the click event occurred within the rectangle area
         if labelX < mouseX < labelX + labelWidth and labelY < mouseY < labelY + labelHeight:
-            # Restart the game
             app.paused = False
-            app.player.hearts = 3
-            app.player.pagesCollected = 0
-            # Reset other necessary game variables and elements
+            app.won = False
             app.maze, app.player, app.page, app.ghost, app.portal = setupMaze(levels[1], app) 
+            # restartGame(app)
 
 
 def onKeyHold(app, keys):
@@ -413,10 +404,6 @@ def onKeyHold(app, keys):
             dx = -5
         elif 'right' in keys or 'd' in keys:
             dx = 5
-
-    # Multiply by the step size you want to move
-    # dx *= stepSize
-    # dy *= stepSize
 
     app.player.move(dx, dy, walls)
 
@@ -449,15 +436,14 @@ def onAppStart(app):
 
         
     wallImage = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/wall.jpg')
-    app.wallSprite = CMUImage(wallImage.resize((24, 24))) 
+    app.wallSprite = CMUImage(wallImage.resize((24,24))) 
 
     # gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver1.png')
     gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.png')
     app.gameOver = CMUImage(gameOver) 
 
-    # gameOver = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/gameOver.png')
-    # app.gameOverSprite = CMUImage(gameOver) 
-    # # .resize((250, 250))
+    youWin = Image.open('/Users/jiynmn/Desktop/15-112/lostPages/assets/youWin.png')
+    app.youWin = CMUImage(youWin.resize((330, 220)))
 
 def onStep(app):
     if app.paused == False:
@@ -467,13 +453,15 @@ def onStep(app):
 
         app.player.lastCollideTime += 1
         for ghost in ghosts:
-            if app.player.isCollision(ghost) and app.player.lastCollideTime >= app.player.collideTime:
-                print("YOU DIED!!!")
+            if (app.player.isCollision(ghost) and app.player.lastCollideTime >= app.player.collideTime):
                 app.player.loseHeart()
                 app.player.lastCollideTime = 0
 
         if app.player.hearts <= 0:
             app.paused = True
+        
+        if app.player.pagesCollected == 3 and app.player.isCollision(app.portal):
+            app.won = True
 
 def redrawAll(app):
 
@@ -490,12 +478,10 @@ def redrawAll(app):
             drawImage(app.portalSpriteList[app.spriteCounter], item.x, item.y, align = 'center')
 
     pageText = f"pages collected: {app.player.pagesCollected}/3"
-    ### FIX THIS IODEHWIQODEJWIQODJE
-    textX = app.width - 620
+    textX = app.width - 610
     textY = 25
-    # fontPath = '/Users/jiynmn/Desktop/15-112/lostPages/assets/PixelifySans-Medium.ttf'
-    # gameFont = ImageFont.truetype(fontPath, size=13)
-    drawLabel(pageText, textX, textY, fill = 'white', bold = True, size = 13)
+    ## ADD CITATION FOR THIS DSIFHSPFHE*W(HF*(OHDSUILFNDJSLNFDKSLNFJKLDSNJFK))
+    drawLabel(pageText, textX, textY, fill = 'white', size = 15, font = 'Pixelify Sans SemiBold')
 
 
     heartSpacing = 30  # Adjust this value to manage the spacing between hearts
@@ -508,19 +494,31 @@ def redrawAll(app):
 
     if app.paused == True:
         drawRect(0, 0, app.width, app.height, fill='black')
-        drawImage(app.gameOver, 350, 310, align = 'center')
 
-        labelText = 'Click to Restart!'
-        labelWidth = 150
-        labelHeight = 45
+        labelText = 'click to try again!'
+        labelWidth = 200
+        labelHeight = 50
         
         labelX = (app.width - labelWidth) // 2
-        labelY = (app.height - labelHeight) // 2 + 75
+        labelY = (app.height - labelHeight) // 2 + 85
         
-        drawRect(labelX, labelY, labelWidth, labelHeight, fill='grey')
-        drawLabel(labelText, labelX + labelWidth // 2, labelY + labelHeight // 2, fill='black', align='center', size = 14)
+        drawImage(app.gameOver, labelX + labelWidth // 2, 290, align = 'center')
+        drawRect(labelX, labelY, labelWidth, labelHeight, fill='darkRed', border = 'red', borderWidth = 3)
+        drawLabel(labelText, labelX + labelWidth // 2, labelY + labelHeight // 2, fill='red', align='center', size = 20, font = 'Pixelify Sans SemiBold')
 
+    if app.won == True:
+        drawRect(0, 0, app.width, app.height, fill='black')
 
+        labelText = 'click to play again!'
+        labelWidth = 200
+        labelHeight = 50
+        
+        labelX = (app.width - labelWidth) // 2
+        labelY = (app.height - labelHeight) // 2 + 85
+        
+        drawImage(app.youWin, labelX + labelWidth // 2, 290, align = 'center')
+        drawRect(labelX, labelY, labelWidth, labelHeight, fill='darkGreen', border = 'limeGreen', borderWidth = 3)
+        drawLabel(labelText, labelX + labelWidth // 2, labelY + labelHeight // 2, fill='limeGreen', align='center', size = 20, font = 'Pixelify Sans SemiBold')
 
     for page in pages:
         if app.player.isCollision(page):
@@ -528,26 +526,21 @@ def redrawAll(app):
             app.player.pagesCollected += 1
             pages.remove(page) # Each page is a one time instance (100 gold only one time)
 
-    if app.player.isCollision(app.portal):
-        print("woohoo!")
-    
+    if app.player.pagesCollected != 3 and app.player.isCollision(app.portal):
+        pageText = 'You have not collected all the pages!'
+        ### FIX THIS IODEHWIQODEJWIQODJE
+        textX = 350
+        textY = 660
+        # fontPath = '/Users/jiynmn/Desktop/15-112/lostPages/assets/PixelifySans-Medium.ttf'
+        # gameFont = ImageFont.truetype(fontPath, size=13)
+        drawLabel(pageText, textX, textY, fill = 'red', bold = True, size = 14, font = 'Pixelify Sans SemiBold')
+
     for ghost in ghosts:
         if app.paused == False:
             ghost.move()
 
-        # if app.player.isCollision(ghost):
-        #     print("YOU DIED!!!")
-        #     app.player.loseHeart()
-                
-
         if ghost.isClose(app.player):
             ghost.chase(app.player)
-    
-
-        
- 
-
-    
 
 def main():
     runApp(width=700, height=700)
