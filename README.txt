@@ -16,12 +16,12 @@ with the location of the file. It is important to check that all the
 necessary assets for the program are in the folder. 
 
 Since all of my assets and sub-files were loaded locally, you will need to 
-replace their paths with whereever the lostPages folder is located on your 
+replace their paths with wherever the lostPages folder is located on your 
 computer. For example, when I loaded the gif for the main player, I used 
 '/Users/jiynmn/Desktop/15-112/lostPages/assets/sprite.gif'. This is the 
 same for the crossword file. When the player collides with a page in the 
 game, it uses subprocess to open the file. You will need to replace this 
-file destination for whereever you store the crossword.py file.
+file destination for wherever you store the crossword.py file.
 
 The "post-MVP" libraries I use in my code are subprocess (to open files) and 
 tkinter (to close windows). Since these are part of the general Python library, 
@@ -31,7 +31,7 @@ For fonts, I used the Google Fonts "Metamorphous" and "Pixelify Sans." To upload
 these fonts so that I could use them in my project, I added them to my Font Book 
 (on Mac). I did this by going to Font Book > File > Add Fonts to Current User, 
 then uploading the folder. If you are on Windows, you can add these fonts in 
-Control Panel > Apperance and Personalization > Fonts.
+Control Panel > Appearance and Personalization > Fonts.
 
 
 *** There are no shortcut commands
